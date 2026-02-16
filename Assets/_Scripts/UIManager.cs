@@ -21,7 +21,8 @@ public class UIManager : MonoBehaviour
 
     private bool isTransitioning = false;
     private Dictionary<KeyCode, int> keyMap = new Dictionary<KeyCode, int>();
-    public VideoPlayer TransitionVideoPlayer;
+    public TransitionController Transition;
+    public TransitionController backTransition;
 
     private void Awake()
     {
@@ -71,14 +72,15 @@ public class UIManager : MonoBehaviour
     }
     private IEnumerator PlayTransitionSequence(int cityIndex)
     {
+        backTransition.FadeOut();
         isTransitioning = true;
 
         // --- STEP 1: Play Normal Transition (BG → Arabic) ---
         Fade(arabicImages[cityIndex], true);
 
-        TransitionVideoPlayer.Play();
+        Transition.PlayTransition();
 
-        yield return new WaitForSeconds((float)TransitionVideoPlayer.clip.length);
+        yield return new WaitForSeconds(transitionVideoDuration);
 
         // --- STEP 2: Show Arabic image ---
         yield return new WaitForSeconds(displayTime);
@@ -87,6 +89,7 @@ public class UIManager : MonoBehaviour
         Fade(englishImages[cityIndex], true, () => Fade(arabicImages[cityIndex], false));
         yield return new WaitForSeconds(displayTime);
 
+        backTransition.PlayTransition();
 
         yield return new WaitForSeconds(transitionVideoDuration);
         // --- STEP 5: Hide English ---
@@ -95,12 +98,16 @@ public class UIManager : MonoBehaviour
         // --- STEP 6: Return to BG looping ---
         isTransitioning = false;
         currentTransitionCoroutine = null;
+
+        backTransition.FadeOut();
+        Transition.FadeOut();
     }
     private void ResetTransitionState()
     {
         // Fade out everything and reset transitions
         HideAllCities();
-
+        backTransition.FadeOut();
+        Transition.FadeOut();
         isTransitioning = false;
     }
 
